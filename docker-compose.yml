@@ -1,10 +1,9 @@
 services:
   ddns-ipv64:
-    build:
-      dockerfile: ./Dockerfile
+    image: lodzen/ddns-ipv64:latest
     container_name: ddns-ipv64
     restart: unless-stopped
-    network_mode: bridge
+    hostname: ddns-ipv64
     volumes:
       - data:/data
     environment:
@@ -34,6 +33,3 @@ services:
       # Benutzer-/Gruppen-IDs:
       # - "PUID=1000"
       # - "PGID=1000"
-volumes:
-  data:
-    name: ddns-ipv64_data
