@@ -1,6 +1,7 @@
 services:
   ddns-ipv64:
-    image: alcapone1933/ddns-ipv64:latest
+    build:
+      dockerfile: ./Dockerfile
     container_name: ddns-ipv64
     restart: unless-stopped
     network_mode: bridge
