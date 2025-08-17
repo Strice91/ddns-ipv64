@@ -36,4 +36,4 @@ RUN cd /data && chmod +x *.sh && mv /data/cronjob /etc/cron.d/container_cronjob 
 WORKDIR /data
 ENTRYPOINT ["/sbin/tini", "--", "/usr/local/bin/entrypoint.sh"]
 # HEALTHCHECK --interval=5s --timeout=30s --start-period=5s --retries=3 CMD curl -sSL --user-agent "${CURL_USER_AGENT}" --fail "https://ipv64.net" > /dev/null || exit 1
-# HEALTHCHECK --interval=5s --timeout=30s --start-period=5s --retries=2 CMD /usr/local/bin/healthcheck.sh
+HEALTHCHECK --interval=5s --timeout=30s --start-period=5s --retries=2 CMD /usr/local/bin/healthcheck.sh
