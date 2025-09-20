@@ -215,7 +215,7 @@ fi
 function Domain_default() {
 if [ -f /etc/.firstrun ]; then
     API_URL="https://ipv64.net/nic/update?key=${DOMAIN_KEY}&domain=${DOMAIN_IPV64}"
-    if [ -n "${IP}" ]; then API_URL="${API_URL}&ip=${IP}"; fi
+    if [[ "${IPV4_ENABLED}" =~ (YES|yes|Yes) ]] && [ -n "${IP}" ]; then API_URL="${API_URL}&ip=${IP}"; fi
     if [[ "${IPV6_ENABLED}" =~ (YES|yes|Yes) ]] && [ -n "${IP6}" ]; then API_URL="${API_URL}&ip6=${IP6}"; fi
     API_URL="${API_URL}&output=min"
     CHECK=$(curl -sSL --user-agent "${CURL_USER_AGENT}" "${API_URL}" 2>/dev/null)
@@ -224,7 +224,9 @@ if [ -f /etc/.firstrun ]; then
         echo "$DATUM  CHECK       - Die Angaben sind richtig gesetzt: DOMAIN und DOMAIN KEY"
         sleep 5
         if [[ "$IP_CHECK" =~ (YES|yes|Yes) ]] ; then
-            for DOMAIN in $(echo "${DOMAIN_IPV64}" | sed -e "s/,/ /g"); do echo "$DATUM  IP CHECK    - Deine DOMAIN ${DOMAIN} HAT DIE IPv4=`dig +short ${DOMAIN} A @${NAME_SERVER}`"; done
+            if [[ "$IPV4_ENABLED" =~ (YES|yes|Yes) ]] ; then
+                for DOMAIN in $(echo "${DOMAIN_IPV64}" | sed -e "s/,/ /g"); do echo "$DATUM  IP CHECK    - Deine DOMAIN ${DOMAIN} HAT DIE IPv4=`dig +short ${DOMAIN} A @${NAME_SERVER}`"; done
+            fi
             if [[ "$IPV6_ENABLED" =~ (YES|yes|Yes) ]] ; then
                 for DOMAIN in $(echo "${DOMAIN_IPV64}" | sed -e "s/,/ /g"); do echo "$DATUM  IP CHECK    - Deine DOMAIN ${DOMAIN} HAT DIE IPv6=`dig +short ${DOMAIN} AAAA @${NAME_SERVER}`"; done
             fi
@@ -264,7 +266,7 @@ fi
 function Domain_add_praefix() {
 if [ -f /etc/.firstrun ]; then
     API_URL="https://ipv64.net/nic/update?key=${DOMAIN_KEY}&domain=${DOMAIN_IPV64}&praefix=${DOMAIN_PRAEFIX}"
-    if [ -n "${IP}" ]; then API_URL="${API_URL}&ip=${IP}"; fi
+    if [[ "${IPV4_ENABLED}" =~ (YES|yes|Yes) ]] && [ -n "${IP}" ]; then API_URL="${API_URL}&ip=${IP}"; fi
     if [[ "${IPV6_ENABLED}" =~ (YES|yes|Yes) ]] && [ -n "${IP6}" ]; then API_URL="${API_URL}&ip6=${IP6}"; fi
     API_URL="${API_URL}&output=min"
     CHECK=$(curl -sSL --user-agent "${CURL_USER_AGENT}" "${API_URL}" 2>/dev/null)
@@ -272,7 +274,9 @@ if [ -f /etc/.firstrun ]; then
         echo "$DATUM  CHECK       - Die Angaben sind richtig gesetzt: DOMAIN mit PRAEFIX und DOMAIN KEY"
         sleep 5
         if [[ "$IP_CHECK" =~ (YES|yes|Yes) ]] ; then
-            for DOMAIN in $(echo "${DOMAIN_IPV64}" | sed -e "s/,/ /g"); do echo "$DATUM  IP CHECK    - Deine DOMAIN mit PRAEFIX ${DOMAIN_PRAEFIX}.${DOMAIN} HAT DIE IPv4=`dig +short ${DOMAIN_PRAEFIX}.${DOMAIN} A @${NAME_SERVER}`"; done
+            if [[ "$IPV4_ENABLED" =~ (YES|yes|Yes) ]] ; then
+                for DOMAIN in $(echo "${DOMAIN_IPV64}" | sed -e "s/,/ /g"); do echo "$DATUM  IP CHECK    - Deine DOMAIN mit PRAEFIX ${DOMAIN_PRAEFIX}.${DOMAIN} HAT DIE IPv4=`dig +short ${DOMAIN_PRAEFIX}.${DOMAIN} A @${NAME_SERVER}`"; done
+            fi
             if [[ "$IPV6_ENABLED" =~ (YES|yes|Yes) ]] ; then
                 for DOMAIN in $(echo "${DOMAIN_IPV64}" | sed -e "s/,/ /g"); do echo "$DATUM  IP CHECK    - Deine DOMAIN mit PRAEFIX ${DOMAIN_PRAEFIX}.${DOMAIN} HAT DIE IPv6=`dig +short ${DOMAIN_PRAEFIX}.${DOMAIN} AAAA @${NAME_SERVER}`"; done
             fi
@@ -286,7 +290,7 @@ if [ -f /etc/.firstrun ]; then
     else
         # Check for rate limiting using the same API format
         CHECK_API_URL="https://ipv64.net/nic/update?key=${DOMAIN_KEY}&domain=${DOMAIN_IPV64}&praefix=${DOMAIN_PRAEFIX}"
-        if [ -n "${IP}" ]; then CHECK_API_URL="${CHECK_API_URL}&ip=${IP}"; fi
+        if [[ "${IPV4_ENABLED}" =~ (YES|yes|Yes) ]] && [ -n "${IP}" ]; then CHECK_API_URL="${CHECK_API_URL}&ip=${IP}"; fi
         if [[ "${IPV6_ENABLED}" =~ (YES|yes|Yes) ]] && [ -n "${IP6}" ]; then CHECK_API_URL="${CHECK_API_URL}&ip6=${IP6}"; fi
         CHECK_INTERVALL=$(curl -sSL --user-agent "${CURL_USER_AGENT}" "${CHECK_API_URL}" | grep -o "Updateintervall")
         if [ "$CHECK_INTERVALL" == "Updateintervall" ]; then
