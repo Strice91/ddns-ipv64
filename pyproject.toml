@@ -1,0 +1,66 @@
+[build-system]
+requires = ["uv_build >= 0.8.17, <0.9.0"]
+build-backend = "uv_build"
+
+[project]
+name = "ddns64"
+description = "DDNS Updater for IPv64.net"
+readme = "README.md"
+authors = [{ name = "Strice91", email = "r.strice@gmail.com" }]
+license = "GPL-3.0-or-later"
+version = "0.0.1"
+requires-python = ">= 3.14"
+dependencies = [
+    "dnspython>=2.8.0",
+    "dynaconf>=3.2.13",
+    "requests>=2.34.2",
+]
+
+[project.optional-dependencies]
+test = ["pytest"]
+lint = ["ruff"]
+type = ["basedpyright"]
+
+[project.urls]
+Repository = "https://github.com/Strice91/ddns-ipv64"
+
+[project.scripts]
+cipug = "ddns64:main"
+
+[tool.uv.build-backend]
+module-root = ""
+module-name = "ddns64"
+
+[tool.basedpyright]
+typeCheckingMode = "strict"
+reportUnusedCallResult = "none"
+reportExplicitAny = "none"
+reportAny = "none"
+reportMissingParameterType = true
+reportUnknownVariableType = true
+reportReturnType = true
+reportMissingTypeArgument = true
+reportMatchNotExhaustive = "none"
+
+[tool.ruff]
+line-length = 120
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "F",   # pyflakes
+    "I",   # isort
+    "ICN", # import conventions
+    "PL",  # pylint
+    "RUF", # ruff
+    "UP",  # pyupgrade
+    "W",   # pycodestyle warnings
+]
+ignore = [
+    "PLC0415", # 'import' should be at the top level of a file
+    "PLC1901", # expression can be simplified as an empty string is falsey
+    "PLR0911", # Too many return statements
+    "PLR0912", # Too many branches
+    "PLR0913", # too many arguments to function call
+    "PLR2004", # magic value used in comparison, consider replacing it with a constant variable
+    "PLW2901", # loop variable overwritten by assignment target
+]

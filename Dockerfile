@@ -1,39 +1,39 @@
-FROM alcapone1933/alpine:latest
-# ipv64.net
+FROM python:3.13-alpine
+
 ARG BUILD_DATE
 LABEL maintainer="alcapone1933 alcapone1933@cosanostra-cloud.de" \
       org.opencontainers.image.created="$BUILD_DATE" \
       org.opencontainers.image.authors="alcapone1933 alcapone1933@cosanostra-cloud.de" \
       org.opencontainers.image.url="https://hub.docker.com/r/alcapone1933/ddns-ipv64" \
-      org.opencontainers.image.version="v0.1.8" \
+      org.opencontainers.image.version="v2.0.0" \
       org.opencontainers.image.ref.name="alcapone1933/ddns-ipv64" \
       org.opencontainers.image.title="DDNS Updater ipv64.net" \
-      org.opencontainers.image.description="Community DDNS Updater fuer ipv64.net"
+      org.opencontainers.image.description="Community DDNS Updater fuer ipv64.net (Python Rewrite)"
 
 ENV TZ=Europe/Berlin \
     CRON_TIME="*/15 * * * *" \
     CRON_TIME_DIG="*/30 * * * *" \
-    VERSION="v0.1.8" \
-    CURL_USER_AGENT="docker-ddns-ipv64/version=v0.1.8 github.com/alcapone1933/docker-ddns-ipv64" \
-    SHOUTRRR_URL="" \
-    SHOUTRRR_SKIP_TEST="no" \
+    VERSION="v2.0.0" \
+    CURL_USER_AGENT="docker-ddns-ipv64-python/version=v2.0.0 github.com/Strice91/ddns-ipv64" \
+    NOTIFY_URL="" \
+    NOTIFY_SKIP_TEST="no" \
     IP_CHECK="yes" \
     NAME_SERVER="ns1.ipv64.net" \
     NETWORK_CHECK="yes" \
     PUID="0" \
     PGID="0"
 
-RUN apk add --update --no-cache tzdata curl bash tini bind-tools jq && \
+RUN apk add --update --no-cache tzdata tini && \
     rm -rf /var/cache/apk/*
 
-RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone && \
-    mkdir -p /data/log /usr/local/bin /etc/cron.d/
-COPY data /data
-COPY --from=alcapone1933/shoutrrr:latest /usr/local/bin/shoutrrr /usr/local/bin/shoutrrr
-RUN cd /data && chmod +x *.sh && mv /data/cronjob /etc/cron.d/container_cronjob && mv *.sh /usr/local/bin/ && \
-    touch /data/log/cron.log && touch /etc/.firstrun
-# VOLUME [ "/data" ]
+RUN mkdir -p /data/log /app /etc/cron.d/ && \
+    touch /etc/.firstrun
+
+COPY app/requirements.txt /app/
+RUN pip install --no-cache-dir -r /app/requirements.txt
+
+COPY app/ /app/
+
 WORKDIR /data
-ENTRYPOINT ["/sbin/tini", "--", "/usr/local/bin/entrypoint.sh"]
-# HEALTHCHECK --interval=5s --timeout=30s --start-period=5s --retries=3 CMD curl -sSL --user-agent "${CURL_USER_AGENT}" --fail "https://ipv64.net" > /dev/null || exit 1
-HEALTHCHECK --interval=1500s --timeout=30s --start-period=5s --retries=2 CMD /usr/local/bin/healthcheck.sh
+ENTRYPOINT ["/sbin/tini", "--", "python3", "/app/entrypoint.py"]
+HEALTHCHECK --interval=1500s --timeout=30s --start-period=5s --retries=2 CMD python3 /app/healthcheck.py
