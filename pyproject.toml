@@ -25,7 +25,7 @@ type = ["basedpyright"]
 Repository = "https://github.com/Strice91/ddns-ipv64"
 
 [project.scripts]
-cipug = "ddns64:main"
+ddns64 = "ddns64.entrypoint:main"
 
 [tool.uv.build-backend]
 module-root = ""

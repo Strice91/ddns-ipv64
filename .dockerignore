@@ -1,0 +1,21 @@
+# Lokale Umgebungen
+.venv/
+env/
+venv/
+__pycache__/
+*.pyc
+
+# Docker und Git
+.git/
+.dockerignore
+.gitignore
+
+# Sensible Daten / Configs
+.env
+.local
+*.log
+config/
+
+# Dein lokales Build-Verzeichnis (falls vorhanden)
+dist/
+build/

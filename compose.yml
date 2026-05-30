@@ -1,0 +1,19 @@
+x-logging: &logging
+  options:
+    max-size: 5m
+    max-file: 3
+
+services:
+  ddns:
+    #image: rstrice/ddns64:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: ddns64
+    restart: unless-stopped
+    hostname: ddns64
+    network_mode: host
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - ./config/:/app/config/:ro
+    logging: *logging
