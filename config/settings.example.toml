@@ -1,0 +1,39 @@
+[service]
+update_interval = 60
+max_updates = 5
+rate_limit_window = 60
+dry_run = true
+
+[api]
+baseurl = "https://ipv64.net/nic/update"
+domain = "deine-domain.ipv64.net"
+prefix = ""
+
+[logging]
+level = "DEBUG"
+
+[network]
+ipv4_sources = [
+    "https://ipinfo.io/ip",
+    "https://ifconfig.me",
+    "https://ifconfig.co/ip",
+    "https://icanhazip.com",
+    "https://api.ipify.org",
+    "https://ipecho.net/plain",
+    "https://ident.me",
+    "https://checkip.amazonaws.com",
+    "https://myexternalip.com/raw",
+    "https://wtfismyip.com/text",
+    "https://ip.tyk.nu",
+    "https://ipv4.icanhazip.com",
+    "https://ipv64.net/ipcheck.php?ipv4",
+]
+ipv6_sources = [
+    "https://ipv6.icanhazip.com",
+    "https://api64.ipify.org",
+    "https://ipv6.ident.me",
+    "https://v6.ident.me",
+    "https://ipv64.net/ipcheck.php?ipv6",
+    "https://ifconfig.co/ipv6",
+]
+nameserver = "ns1.ipv64.net"
