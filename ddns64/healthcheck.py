@@ -1,128 +1,78 @@
 #!/usr/bin/env python3
-import os
 import sys
-import socket
-import requests
-from datetime import datetime
+from ddns64.config import settings
+from ddns64.log import get_logger
+from ddns64.utils import detect_ip, has_ipv6_connectivity, resolve_dns
 
-def _ts() -> str:
-    return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+logger = get_logger("healthcheck")
 
-def log_info(msg: str):  print(f"{_ts()}  INFO    !!!  - {msg}", flush=True)
-def log_warn(msg: str):  print(f"{_ts()}  WARNUNG !!!  - {msg}", flush=True)
-def log_error(msg: str): print(f"{_ts()}  FEHLER  !!!  - {msg}", flush=True)
-def log_ok(msg: str):    print(f"{_ts()}  OK      !!!  - {msg}", flush=True)
 
-# ── Konfiguration ─────────────────────────────────────────────────────────────
-IPV4_ENABLED  = os.environ.get("IPV4_ENABLED",  "yes").lower() in ("yes", "y", "1", "true")
-IPV6_ENABLED  = os.environ.get("IPV6_ENABLED",  "yes").lower() in ("yes", "y", "1", "true")
-NAME_SERVER  = os.environ.get("NAME_SERVER", "ns1.ipv64.net")
-USER_AGENT   = os.environ.get(
-    "CURL_USER_AGENT",
-    "docker-ddns-ipv64-python/2.0.0 github.com/Strice91/ddns-ipv64"
-)
+def main() -> None:
+    ipv4_ok = None  # None: disabled, True: healthy, False: failed
+    ipv6_ok = None  # None: disabled/no connectivity, True: healthy, False: failed
+    dns_ok = False
 
-def check_ipv6_system() -> bool:
-    try:
-        s = socket.socket(socket.AF_INET6, socket.SOCK_STREAM)
-        s.settimeout(3)
-        s.connect(("2606:4700:4700::1111", 80))  # Cloudflare IPv6 DNS
-        s.close()
-        return True
-    except Exception:
-        return False
-
-def check_dns(nameserver: str) -> bool:
-    try:
-        # Versuche eine IP-Adresse aufzulösen oder Nameserver direkt per Socket zu pingen/verbinden (Port 53 UDP/TCP)
-        # Für einen robusten Check benutzen wir dns.resolver wenn importierbar
-        import dns.resolver
-        resolver = dns.resolver.Resolver()
-        # Versuche Nameserver aufzulösen falls er ein Hostname ist
-        try:
-            socket.inet_aton(nameserver)
-            ns_ips = [nameserver]
-        except socket.error:
-            ns_ips = [str(r) for r in dns.resolver.resolve(nameserver, "A")]
-        
-        resolver.nameservers = ns_ips
-        resolver.lifetime = 3.0
-        resolver.resolve("ipv64.net", "A")
-        return True
-    except Exception as e:
-        log_warn(f"DNS check failed via dnspython: {e}")
-        # Fallback auf socket gethostbyname
-        try:
-            socket.gethostbyname("ipv64.net")
-            return True
-        except Exception:
-            return False
-
-def main():
-    ipv6_active = IPV6_ENABLED
-    if ipv6_active:
-        if not check_ipv6_system():
-            log_warn("IPv6 ist im System nicht verfügbar")
-            ipv6_active = False
-
-    health_status = "OK"
-
-    headers = {"User-Agent": USER_AGENT}
-
-    # Check IPv4
-    if IPV4_ENABLED:
-        try:
-            # Erzwinge IPv4 via custom Adapter oder socket bind falls nötig, 
-            # aber für einen einfachen check reicht get.
-            # Um sicherzugehen, dass es IPv4 nutzt, kann requests.get mit timeout benutzt werden.
-            # IPv4 erfragen wir an einem IPv4-only Endpoint oder vertrauen auf das System.
-            resp = requests.get("https://ipv64.net/ipcheck.php?ipv4", headers=headers, timeout=5)
-            if resp.status_code == 200:
-                log_ok("IPv4 Verbindung zu ipv64.net funktioniert")
-            else:
-                log_warn(f"IPv4 Verbindung zu ipv64.net lieferte Status {resp.status_code}")
-                health_status = "PARTIAL"
-        except Exception as e:
-            log_warn(f"IPv4 Verbindung zu ipv64.net nicht möglich: {e}")
-            health_status = "PARTIAL"
-
-    # Check IPv6
-    if ipv6_active:
-        try:
-            # ipv64.net/ipcheck.php?ipv6 ist IPv6-only oder wir fragen es an.
-            resp = requests.get("https://ipv64.net/ipcheck.php?ipv6", headers=headers, timeout=5)
-            if resp.status_code == 200:
-                log_ok("IPv6 Verbindung zu ipv64.net funktioniert")
-            else:
-                log_warn(f"IPv6 Verbindung zu ipv64.net lieferte Status {resp.status_code}")
-                if health_status == "PARTIAL":
-                    health_status = "FAIL"
-                else:
-                    health_status = "PARTIAL"
-        except Exception as e:
-            log_warn(f"IPv6 Verbindung zu ipv64.net nicht möglich: {e}")
-            if health_status == "PARTIAL":
-                health_status = "FAIL"
-            else:
-                health_status = "PARTIAL"
-
-    # Check DNS
-    if check_dns(NAME_SERVER):
-        log_ok(f"NAMESERVER {NAME_SERVER} ist erreichbar")
+    # 1. Check IPv4 Connectivity
+    if settings.service.ipv4_enabled:
+        ipv4 = detect_ip(settings.network.ipv4_sources, "IPv4")
+        ipv4_ok = bool(ipv4)
+        if ipv4_ok:
+            logger.info("IPv4 check: OK")
+        else:
+            logger.warning("IPv4 check: FAILED")
     else:
-        log_error(f"NAMESERVER {NAME_SERVER} ist nicht erreichbar")
-        health_status = "FAIL"
+        logger.debug("IPv4 check: DISABLED")
 
-    # Final result
-    if health_status == "OK":
-        log_info("HEALTH - Alle Verbindungen funktionieren")
-        sys.exit(0)
-    elif health_status == "PARTIAL":
-        log_info("HEALTH - Teilweise Verbindungsprobleme (IPv4 oder IPv6)")
-        sys.exit(0)  # Still considered healthy if at least one IP version works
+    # 2. Check IPv6 Connectivity
+    if settings.service.ipv6_enabled:
+        if not has_ipv6_connectivity():
+            logger.warning("IPv6 check: NO CONNECTIVITY (System has no IPv6 connectivity)")
+        else:
+            ipv6 = detect_ip(settings.network.ipv6_sources, "IPv6")
+            ipv6_ok = bool(ipv6)
+            if ipv6_ok:
+                logger.info("IPv6 check: OK")
+            else:
+                logger.warning("IPv6 check: FAILED")
     else:
-        log_error("HEALTH - Kritische Verbindungsprobleme")
+        logger.debug("IPv6 check: DISABLED")
+
+    # 3. Check DNS Resolution
+    dns_records = resolve_dns("ipv64.net", "A")
+    dns_ok = bool(dns_records)
+    if dns_ok:
+        logger.info("DNS check: OK")
+    else:
+        logger.error("DNS check: FAILED")
+
+    # 4. Final Status Evaluation
+    # Gather statuses of all enabled IP check runs
+    enabled_ips = [status for status in (ipv4_ok, ipv6_ok) if status is not None]
+
+    # DNS check is critical, and at least one enabled IP family check must succeed (if any are enabled)
+    if not dns_ok or (enabled_ips and not any(enabled_ips)):
+        logger.error(
+            f"HEALTH CHECK - Critical failure: "
+            f"IPv4={'OK' if ipv4_ok else 'FAILED' if ipv4_ok is False else 'DISABLED'}, "
+            f"IPv6={'OK' if ipv6_ok else 'FAILED' if ipv6_ok is False else 'DISABLED/NO_CONN'}, "
+            f"DNS={'OK' if dns_ok else 'FAILED'}."
+        )
         sys.exit(1)
+
+    # If any enabled IP checks failed (but not all)
+    if any(status is False for status in enabled_ips):
+        logger.warning(
+            f"HEALTH CHECK - Warning: Partial connectivity: "
+            f"IPv4={'OK' if ipv4_ok else 'FAILED' if ipv4_ok is False else 'DISABLED'}, "
+            f"IPv6={'OK' if ipv6_ok else 'FAILED' if ipv6_ok is False else 'DISABLED/NO_CONN'}, "
+            f"DNS={'OK' if dns_ok else 'FAILED'}."
+        )
+        sys.exit(0)
+
+    # Everything is perfectly fine
+    logger.info("HEALTH CHECK - All checks passed successfully.")
+    sys.exit(0)
+
 
 if __name__ == "__main__":
     main()
