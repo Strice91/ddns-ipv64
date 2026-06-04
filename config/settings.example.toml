@@ -1,5 +1,5 @@
 [service]
-update_interval = 60
+update_interval = 15
 max_updates = 5
 rate_limit_window = 60
 dry_run = true

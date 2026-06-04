@@ -66,13 +66,13 @@ settings = Dynaconf(
         # --- service -------------------------------------------------------
         Validator(
             "service.update_interval",
-            default=900,
+            default=15,
             is_type_of=int,
-            gte=10,
-            lte=86400,
+            gte=1,
+            lte=1440,
             messages={
-                "gte": "service.update_interval must be at least 10 seconds",
-                "lte": "service.update_interval must not exceed 86400 seconds (24 h)",
+                "gte": "service.update_interval must be at least 1 minute",
+                "lte": "service.update_interval must not exceed 1440 minutes (24 h)",
             },
         ),
         Validator("service.ipv4_enabled", default=True, is_type_of=bool),
@@ -80,12 +80,12 @@ settings = Dynaconf(
         Validator("service.dry_run", default=False, is_type_of=bool),
         Validator(
             "service.max_updates",
-            default=5,
+            default=0,
             is_type_of=int,
-            gte=1,
+            gte=0,
             lte=100,
             messages={
-                "gte": "service.max_updates must be at least 1",
+                "gte": "service.max_updates must be at least 0",
                 "lte": "service.max_updates must not exceed 100",
             },
         ),

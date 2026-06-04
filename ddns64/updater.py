@@ -61,5 +61,5 @@ def update_loop() -> None:
         else:
             perform_update(limiter, state)
 
-        logger.info(f"Next check in {settings.service.update_interval}s")
-        time.sleep(settings.service.update_interval)
+        logger.info(f"Next check in {settings.service.update_interval}m")
+        time.sleep(settings.service.update_interval * 60)
