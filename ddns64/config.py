@@ -100,6 +100,11 @@ settings = Dynaconf(
                 "lte": "service.rate_limit_window must not exceed 1440 minutes (24 h)",
             },
         ),
+        Validator(
+            "service.user_agent",
+            default="ddns-ipv64/0.0.1 (https://github.com/Strice91/ddns-ipv64)",
+            is_type_of=str,
+        ),
 
         # --- network -------------------------------------------------------        
         Validator(

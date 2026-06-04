@@ -25,9 +25,10 @@ def has_ipv6_connectivity() -> bool:
 
 def detect_ip(sources: list[str], label: str) -> str | None:
     """Tries each source URL in order and returns the first valid IP string."""
+    headers = {"User-Agent": settings.service.user_agent}
     for url in sources:
         try:
-            response = requests.get(url, timeout=5)
+            response = requests.get(url, headers=headers, timeout=5)
             if response.ok:
                 ip = response.text.strip()
                 logger.debug(f"Detected {label}: {ip} (source: {url})")

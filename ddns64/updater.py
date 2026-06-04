@@ -33,7 +33,8 @@ def perform_update(limiter: RateLimiter, state: IPState) -> None:
             limiter.record_update()
             return
 
-        response = requests.get(settings.api.baseurl, params=params, timeout=10)
+        headers = {"User-Agent": settings.service.user_agent}
+        response = requests.get(settings.api.baseurl, params=params, headers=headers, timeout=10)
         if response.ok and any(res in response.text.lower() for res in ["nochg", "good", "ok"]):
             logger.info(f"Update successful. IPv4: {state.ipv4}, IPv6: {state.ipv6}")
             limiter.record_update()

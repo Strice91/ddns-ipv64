@@ -3,6 +3,7 @@ update_interval = 15
 max_updates = 5
 rate_limit_window = 60
 dry_run = true
+user_agent = "ddns-ipv64/0.0.1 (https://github.com/Strice91/ddns-ipv64)"
 
 [api]
 baseurl = "https://ipv64.net/nic/update"
